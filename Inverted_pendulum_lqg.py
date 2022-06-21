@@ -1,6 +1,5 @@
 """
 Created on 2022-06-18
-
 @author: GolfVictorDesign
 
 Simulation of a LQG control for inverted pendulum on wheels
@@ -19,7 +18,7 @@ State-Space model :
 
     The system is a self balancing robot as we can see many on the internet.
     
-    It has 2 brushed DC  reducted motors with an IMU on top to measure theta and encoders on the motors
+    It has 2 brushed DC reducted motors with an IMU on top to measure theta and encoders on the motors
     the DC motors are controlled by a PWM controller.
 
     As a simplified system, let say we have 4 states 
@@ -77,5 +76,29 @@ State-Space model :
      T = kT.Ia;               kT = (kb.Φ)/(2.pi)
      n = kn.((Vm - Rm.Ia));   kn = 1/(kb.Φ)
     
-    
 """
+theta0 = np.pi
+m = 0.1
+l = 0.15
+g = m * 9.81
+k = 2.
+beta = -0.5
+gamma = 0.01
+A43 = -(g/l)*np.cos(theta)
+
+A_matrix = np.array([[0., 1., 0., 0.],
+                     [0., beta, 0., 0],
+                     [0., 0., 0., 1.],
+                     [0., 0., A43, -gamma]])
+
+B_matrix = np.array([[k], [0.], [0.], [0.]])
+
+C_matrix = np.array([[1., 0., 0., 1.]])
+
+D_matrix = np.array([[1.]])
+
+system_ss = control.ss(A_matrix, B_matrix, C_matrix, D_matrix)
+print(system_ss)
+
+system_tf = control.ss2tf(system_ss)
+print(system_tf)
