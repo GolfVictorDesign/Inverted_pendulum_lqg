@@ -33,49 +33,40 @@ State-Space model :
     X3 = theta         =>  PI
     X4 = theta_dot     =>  0
      
-            [           X2            ]   [    x_dot   ]
-    X_dot = [      beta.X2 + k.u      ] = [  x_dotdot  ]
-            [           X4            ]   [  theta_dot ]
-            [-(g/l).sin(X3) - gamma.X4]   [theta_dotdot]
+            [                   X2                   ]   [    x_dot   ]
+    X_dot = [             -beta.X2 + Kp.u            ] = [  x_dotdot  ]
+            [                   X4                   ]   [  theta_dot ]
+            [-(g/l).sin(X3) - gamma.X4 + Kq.X2 - Kr.u]   [theta_dotdot]
             
-            beta => mechanical loss of the motor-wheels subsystem 
-            k    => 'gain' of input (i.e voltage) to acceleration of the motor-wheels subsystem 
+            beta  => mechanical loss and damping of the motor-wheels subsystem 
+            Kp    => 'gain' of input (i.e voltage) to acceleration of the motor-wheels subsystem
+            Kq    =>  
+            Kr    => 
+            gamma => Damping of the pendulum
              
     A is the Jacobian of X :
     
     A11 = dX1/dX1 = 0   A12 = dX1/dX2 = 1    A13 = dX1/dX3 = 0   A14 = dX1/dX4 = 0
     A21 = dX2/dX1 = 0   A22 = dX2/dX2 = beta A23 = dX2/dX3 = 0   A24 = dX1/dX4 = 0
     A31 = dX3/dX1 = 0   A32 = dX3/dX2 = 0    A33 = dX3/dX3 = 0   A34 = dX1/dX4 = 1
-    A41 = dX4/dX1 = 0   A42 = dX4/dX2 = 0    A43 = dX4/dX3 = A43 A44 = dX4/dX4 = -gamma
+    A41 = dX4/dX1 = 0   A42 = dX4/dX2 = Kq   A43 = dX4/dX3 = A43 A44 = dX4/dX4 = -gamma
     
     A43 = -(g/l).cos(X3)
     
         [ 0     1     0      0  ]
-    A = [ 0   beta    0      0  ]
+    A = [ 0   -beta    0      0  ]
         [ 0     0     0      1  ]
-        [ 0     0    A43  -gamma]
+        [ 0     Kq    A43  -gamma]
         
     B is the control matrix :
     
     u => PWM voltage controller of the motor 
     let assume when PWM=100% u = 10V
     
-    Basic brushed DC characteristics :
-    Eb, counter-electromotive force (V)
-    Ia, armature current (A)
-    kb, counter EMF equation constant
-    kn, speed equation constant
-    kT, torque equation constant
-    n, armature frequency (rpm)
-    Rm, motor resistance (Ω)
-    T, motor torque (Nm)
-    Vm, motor input voltage (V)
-    Φ, machine's total flux (Wb)
-    
-    Vm = Eb + Rm.Ia
-     T = kT.Ia;               kT = (kb.Φ)/(2.pi)
-     n = kn.((Vm - Rm.Ia));   kn = 1/(kb.Φ)
-    
+        [ 0  ]
+    B = [ Kp ]
+        [ 0  ]
+        [ Kr ]
 """
 theta0 = np.pi
 m = 0.1
