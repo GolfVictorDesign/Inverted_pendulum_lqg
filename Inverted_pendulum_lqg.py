@@ -72,24 +72,41 @@ theta0 = np.pi
 m = 0.1
 l = 0.15
 g = m * 9.81
-k = 2.
+Kp = 2.0
+Kr = 1.0
 beta = -0.5
 gamma = 0.01
-A43 = -(g/l)*np.cos(theta)
+A43 = -(g/l)*np.cos(theta0)
+
+dt_system = 0.01
 
 A_matrix = np.array([[0., 1., 0., 0.],
                      [0., beta, 0., 0],
                      [0., 0., 0., 1.],
                      [0., 0., A43, -gamma]])
 
-B_matrix = np.array([[k], [0.], [0.], [0.]])
+B_matrix = np.array([[0.], [Kp], [0.], [Kr]])
 
-C_matrix = np.array([[1., 0., 0., 1.]])
+C_matrix = np.array([[0., 1., 0., 1.]])
 
-D_matrix = np.array([[1.]])
+D_matrix = np.array([[0.]])
 
 system_ss = control.ss(A_matrix, B_matrix, C_matrix, D_matrix)
 print(system_ss)
 
-system_tf = control.ss2tf(system_ss)
-print(system_tf)
+discrete_system_ss = control.c2d(system_ss, dt_system)
+print(discrete_system_ss)
+
+inverted_pendulum_controllable = np.linalg.matrix_rank(control.ctrb(A_matrix, B_matrix))
+
+if A_matrix.shape[1] == inverted_pendulum_controllable:
+    message = "The system is controllable, its controllability matrix is full rank " \
+              "(rank = {rank:d} Nb states = {states:d})"
+    print(message.format(rank=inverted_pendulum_controllable, states=A_matrix.shape[1]))
+
+inverted_pendulum_observable = np.linalg.matrix_rank(control.obsv(A_matrix, C_matrix))
+
+if A_matrix.shape[1] == inverted_pendulum_observable:
+    message = "The system is observable, its observability matrix is full rank " \
+              "(rank = {rank:d} Nb states = {states:d})"
+    print(message.format(rank=inverted_pendulum_observable, states=A_matrix.shape[1]))
