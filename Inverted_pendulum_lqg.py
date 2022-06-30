@@ -80,50 +80,52 @@ A43 = -(g/l)*np.cos(theta0)
 
 dt_system = 0.01
 
+# system matrices
 A_matrix = np.array([[0., 1., 0., 0.],
                      [0., beta, 0., 0],
                      [0., 0., 0., 1.],
                      [0., 0., A43, -gamma]])
-
 B_matrix = np.array([[0.], [Kp], [0.], [Kr]])
-
 C_matrix = np.array([[1., 1., 1., 1.]])
-
 D_matrix = np.array([[0.]])
 
+# create the state-space system
 system_ss = control.ss(A_matrix, B_matrix, C_matrix, D_matrix)
 print(system_ss)
 
+# convert to discrete time
 discrete_system_ss = control.c2d(system_ss, dt_system)
 print(discrete_system_ss)
 
+# check observability
 inverted_pendulum_controllable = np.linalg.matrix_rank(control.ctrb(A_matrix, B_matrix))
-
 if A_matrix.shape[1] == inverted_pendulum_controllable:
     message = "The system is controllable, its controllability matrix is full rank " \
               "(rank = {rank:d}, Nb states = {states:d})"
     print(message.format(rank=inverted_pendulum_controllable, states=A_matrix.shape[1]))
-
 else:
     message = "The system is NOT controllable, its controllability matrix has rank " \
               "{rank:d} but numbers of states are {states:d})"
     print(message.format(rank=inverted_pendulum_controllable, states=A_matrix.shape[1]))
 
+# check controllability
 inverted_pendulum_observable = np.linalg.matrix_rank(control.obsv(A_matrix, C_matrix))
-
 if A_matrix.shape[1] == inverted_pendulum_observable:
     message = "The system is observable, its observability matrix is full rank " \
               "(rank = {rank:d}, Nb states = {states:d})"
     print(message.format(rank=inverted_pendulum_observable, states=A_matrix.shape[1]))
-
 else:
     message = "The system is NOT observable, its observability matrix has rank " \
               "{rank:d} but numbers of states are {states:d})"
     print(message.format(rank=inverted_pendulum_observable, states=A_matrix.shape[1]))
 
+# compute the linear quadratic regulator
 Q_lqr = np.diagflat([1., 1., 1., 1.])
 R_lqr = np.array([10.])
+K_lqr, S_lqr, E_lqr = control.lqr(discrete_system_ss, Q_lqr, R_lqr)
 
-K_lqr = control.lqr(discrete_system_ss, Q_lqr, R_lqr)
-
-discrete_open_loop_system_ss = control.feedback(discrete_system_ss, K_lqr)
+# create the new system with feedback
+discrete_open_loop_system_ss = control.append(discrete_system_ss, K_lqr)
+discrete_closed_loop_system_ss = control.feedback(discrete_system_ss)
+print()
+print(discrete_closed_loop_system_ss)
