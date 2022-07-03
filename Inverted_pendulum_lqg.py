@@ -18,20 +18,20 @@ State-Space model :
 
     The system is a self balancing robot as we can see many on the internet.
     
-    It has 2 brushed DC reducted motors with an IMU on top to measure theta and encoders on the motors
+    It has 2 brushed DC motors with an IMU on top to measure theta and encoders on the motors
     the DC motors are controlled by a PWM controller.
 
     As a simplified system, let say we have 4 states 
-     * x            => Position of the motor-wheels subsystem 
-     * x_dot        => Linear speed of the motor-wheels subsystem 
-     * theta        => Angle of the pendulum
-     * theta_dot    => Angular velocity of the pendulum 
+     * x                => Position of the motor-wheels subsystem 
+     * x_dot            => Linear speed of the motor-wheels subsystem 
+     * theta            => Angle of the pendulum
+     * theta_dot        => Angular velocity of the pendulum 
      
     States                 Fixed points
-    X1 = x             =>  arbitrary fixed point
-    X2 = x_dot         =>  0 
-    X3 = theta         =>  PI
-    X4 = theta_dot     =>  0
+     * X1 = x           =>  arbitrary fixed point
+     * X2 = x_dot       =>  0 
+     * X3 = theta       =>  0 for pendulum up
+     * X4 = theta_dot   =>  0
      
             [                   X2                   ]   [    x_dot   ]
     X_dot = [             -beta.X2 + Kp.u            ] = [  x_dotdot  ]
@@ -68,15 +68,28 @@ State-Space model :
         [ 0  ]
         [ Kr ]
 """
-theta0 = np.pi
-m = 0.1
-l = 0.15
-g = m * 9.81
+
+# states initial conditions
+x_init = 0.0            # initial position of the cart
+x_dot_init = 0.0        # initial speed of the cart
+theta_init = 0.0        # initial angle of the pendulum
+theta_dot_init = 0.01   # initial angular speed of the pendulum
+states_init = np.array([[x_init], [x_dot_init], [theta_init], [theta_dot_init]])
+
+# physical parameters
+m_arm = 0.20        # mass of the pendulum
+M_cart = 0.30       # mass of the cart
+arm_length = 0.15   # arm length from the cart to the center of mass of the pendulum
+g = 9.81            # gravity constant
+arm_inertia = (1/3) * m_arm * (arm_length ** 2)
+
 Kp = 2.0
 Kr = 1.0
 beta = -0.5
 gamma = 0.01
-A43 = -(g/l)*np.cos(theta0)
+
+# matrix values
+A43 = -(g/arm_length)*np.cos(theta_init)
 
 dt_system = 0.01
 
@@ -88,14 +101,6 @@ A_matrix = np.array([[0., 1., 0., 0.],
 B_matrix = np.array([[0.], [Kp], [0.], [Kr]])
 C_matrix = np.array([[1., 1., 1., 1.]])
 D_matrix = np.array([[0.]])
-
-# create the state-space system
-system_ss = control.ss(A_matrix, B_matrix, C_matrix, D_matrix)
-print(system_ss)
-
-# convert to discrete time
-discrete_system_ss = control.c2d(system_ss, dt_system)
-print(discrete_system_ss)
 
 # check observability
 inverted_pendulum_controllable = np.linalg.matrix_rank(control.ctrb(A_matrix, B_matrix))
@@ -121,11 +126,5 @@ else:
 
 # compute the linear quadratic regulator
 Q_lqr = np.diagflat([1., 1., 1., 1.])
-R_lqr = np.array([10.])
-K_lqr, S_lqr, E_lqr = control.lqr(discrete_system_ss, Q_lqr, R_lqr)
-
-# create the new system with feedback
-discrete_open_loop_system_ss = control.append(discrete_system_ss, K_lqr)
-discrete_closed_loop_system_ss = control.feedback(discrete_system_ss)
-print()
-print(discrete_closed_loop_system_ss)
+R_lqr = np.array([1.])
+K_lqr, S_lqr, E_lqr = control.lqr(A_matrix, B_matrix, Q_lqr, R_lqr)
