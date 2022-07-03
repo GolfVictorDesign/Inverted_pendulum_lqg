@@ -20,14 +20,18 @@ State-Space model :
     
     It has 2 brushed DC motors with an IMU on top to measure theta and encoders on the motors
     the DC motors are controlled by a PWM controller.
+        
+    The equations of motion from the lagrangian equation yields:
+        (M + m).x_dotdot - m.l.theta_dot.cos(theta) + m.l.theta_dot².sin(theta) = F
+        l.theta_dot - g.sin(theta) = x_dotdot.cos(theta)
 
-    As a simplified system, let say we have 4 states 
+    The states representing the system:
      * x                => Position of the motor-wheels subsystem 
      * x_dot            => Linear speed of the motor-wheels subsystem 
      * theta            => Angle of the pendulum
      * theta_dot        => Angular velocity of the pendulum 
      
-    States                 Fixed points
+    States                  Fixed points
      * X1 = x           =>  arbitrary fixed point
      * X2 = x_dot       =>  0 
      * X3 = theta       =>  0 for pendulum up
@@ -71,9 +75,9 @@ State-Space model :
 
 # states initial conditions
 x_init = 0.0            # initial position of the cart
-x_dot_init = 0.0        # initial speed of the cart
+x_dot_init = 0.0        # initial velocity of the cart
 theta_init = 0.0        # initial angle of the pendulum
-theta_dot_init = 0.01   # initial angular speed of the pendulum
+theta_dot_init = 0.01   # initial angular velocity of the pendulum
 states_init = np.array([[x_init], [x_dot_init], [theta_init], [theta_dot_init]])
 
 # physical parameters
